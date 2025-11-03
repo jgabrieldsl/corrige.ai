@@ -1,6 +1,4 @@
 # Backend - Corrige.ai
-
-## Objetivo
 Backend da plataforma Corrige.ai, desenvolvido em Java com Spring Boot, focado em resolver a dor do usuário relacionada à demora, ansiedade e falta de acesso a feedbacks de redação. O sistema atua como intermediário entre o aluno e a IA, garantindo análises rápidas e feedbacks detalhados das redações.
 
 ## Tecnologias Principais (MVP)

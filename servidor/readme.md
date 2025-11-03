@@ -1,9 +1,4 @@
 # Servidor de Tickets - Corrige.ai
-
-## Descrição
-# Servidor de Tickets - Corrige.ai
-
-## Descrição
 Servidor Java implementado com Sockets puros para gerenciar a comunicação em tempo real do sistema de tickets/dúvidas. Este servidor atua como um microserviço especializado em gerenciar conexões em tempo real, se comunicando exclusivamente com o Backend principal da aplicação.
 
 ## Arquitetura

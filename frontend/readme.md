@@ -1,6 +1,4 @@
 # Frontend - Corrige.ai
-
-## Descrição
 Frontend da plataforma Corrige.ai, desenvolvido com React e TypeScript. Esta parte do projeto é responsável pela interface do usuário, fornecendo uma experiência moderna e responsiva para a correção automatizada de redações.
 
 ## Tecnologias
