@@ -1,6 +1,4 @@
 # Correção de Redação ENEM com Inteligência Artificial
-
-## Descrição
 Este projeto desenvolve uma plataforma para correção automatizada de redações do ENEM utilizando Inteligência Artificial. A plataforma aborda desafios comuns na correção de redações, como a demora do processo manual, a ausência de feedback instantâneo e a inconsistência nas avaliações.
 
 Utilizando APIs de IA para análise de texto, o sistema avalia competências como gramática, coesão, argumentação e proposta de intervenção, simulando os critérios oficiais do ENEM. O backend é implementado em Java para atender a requisitos acadêmicos, e o frontend é construído com React e TypeScript, garantindo uma interface de usuário moderna e responsiva.
@@ -28,9 +26,9 @@ Este projeto utiliza o **Gitflow** como fluxo de trabalho para gerenciar branche
 - `develop`: Branch de desenvolvimento.
 
 **Passos para Contribuir:**
-1. Crie sua branch a partir da `develop`: `git checkout -b feature/sua-funcionalidade develop`.
-2. Faça o commit de suas mudanças: `git commit -m "feat: Descrição da nova funcionalidade"`.
-3. Envie para o repositório: `git push origin feature/sua-funcionalidade`.
+1. Crie sua branch a partir da `develop`: `git checkout -b feat/sua-funcionalidade`.
+2. Faça o commit de suas mudanças: `git commit -m "feat: descricao da nova funcionalidade"`.
+3. Envie para o repositório: `git push -u origin feat/sua-funcionalidade`.
 4. Abra um Pull Request para a branch `develop`.
 
 ## Autores
