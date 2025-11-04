@@ -64,6 +64,9 @@ backend/
 - `GET /api/rankings`: Obter rankings
 - `GET /api/achievements`: Listar conquistas do usuário
 
+## Endpoint teste
+- `GET /api/test`: Testar conexão com o servidor
+
 ## Integração com IA (MVP)
 O backend integra com APIs de IA para análise das competências do ENEM:
 1. Domínio da norma culta da língua escrita
