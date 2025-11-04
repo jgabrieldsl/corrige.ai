@@ -1,4 +1,4 @@
-function App() {
+export const Home = () => {
   return (
     <>
       <h1>Corrige.AI</h1>
@@ -6,4 +6,4 @@ function App() {
   )
 }
 
-export default App
+export default Home

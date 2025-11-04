@@ -32,7 +32,7 @@ Sistema de comunicação via tickets para dúvidas sobre redações corrigidas, 
 
 ### 1. Iniciar Conexão Socket
 ```json
-// Cliente -> Servidor
+// Backend -> Servidor
 {
     "tipo": "CONNECT",
     "dados": {
@@ -42,7 +42,7 @@ Sistema de comunicação via tickets para dúvidas sobre redações corrigidas, 
     }
 }
 
-// Servidor -> Cliente (Sucesso)
+// Servidor -> Backend (Sucesso)
 {
     "tipo": "CONNECT_SUCCESS",
     "dados": {
