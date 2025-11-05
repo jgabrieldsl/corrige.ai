@@ -2,7 +2,7 @@ import { useConnectionController } from '../controllers'
 import type { ConnectionRequest } from '../models'
 
 export const useConnectionHome = () => {
-  const { connection, isConnecting, setConnection } = useConnectionController()
+  const { connection, isConnecting, setConnection, disconnect } = useConnectionController()
 
   const connectionPayload: ConnectionRequest = {
     tipo: 'CONNECT',
@@ -14,6 +14,7 @@ export const useConnectionHome = () => {
   }
 
   const handleConnect = async () => await setConnection(connectionPayload)
+  const handleDisconnect = async () => await disconnect()
 
-  return { connection, isConnecting, handleConnect }
+  return { connection, isConnecting, handleConnect, handleDisconnect }
 }
