@@ -1,6 +1,7 @@
 export interface ConnectionData {
   socketId: string
   timestamp: number
+  totalUsuarios: number
 }
 
 export interface ConnectionResponse {

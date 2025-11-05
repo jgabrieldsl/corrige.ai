@@ -18,4 +18,12 @@ export class ConnectionService {
       throw error
     }
   }
+
+  async disconnect(socketId: string): Promise<void> {
+    try {
+      await this.apiService.delete(`/api/disconnect/${socketId}`)
+    } catch (error) {
+      throw error
+    }
+  }
 }
