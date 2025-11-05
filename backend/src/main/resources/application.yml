@@ -1,0 +1,16 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb+srv://AppUser:IntegratedProject123@cluster0.ywyktai.mongodb.net/corrigeai?retryWrites=true&w=majority
+      database: corrigeai
+      auto-index-creation: true
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+
+logging:
+  level:
+    org.springframework.data.mongodb: DEBUG
+    org.mongodb: DEBUG
+
+server:
+  port: 8080

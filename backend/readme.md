@@ -49,23 +49,16 @@ backend/
 - `GET /api/tickets`: Listar tickets do usuário
 - `PUT /api/tickets/{id}`: Atualizar ticket
 
-## Funcionalidades Futuras (Não obrigatórias)
+### 4. Sistema de Conexão em Tempo Real
+- `POST /api/test`: Estabelece conexão com o servidor de sockets
+- `GET /api/connections`: Lista todas as conexões ativas
+- `DELETE /api/disconnect/{socketId}`: Desconecta um socket específico
 
-### 1. Upload de Arquivos
-- `POST /api/essays/file`: Enviar redação via arquivo (PDF/DOCX)
-
-### 2. Sistema de Pagamento
-- `GET /api/plans`: Listar planos disponíveis
-- `POST /api/subscriptions`: Criar assinatura
-- `GET /api/subscriptions/status`: Verificar status da assinatura
-
-### 3. Gamificação
-- `GET /api/challenges`: Listar desafios disponíveis
-- `GET /api/rankings`: Obter rankings
-- `GET /api/achievements`: Listar conquistas do usuário
-
-## Endpoint teste
-- `GET /api/test`: Testar conexão com o servidor
+### 5. Sistema de Chat em Tempo Real
+- `POST /api/chat/send`: Envia mensagem de chat
+  - Body: `{ "socketId": "uuid", "mensagem": "texto" }`
+- `GET /api/chat/stream/{socketId}`: Stream SSE (Server-Sent Events) para receber mensagens em tempo real
+  - Retorna eventos do tipo `chat-message` com dados: `{ "userId", "userType", "mensagem", "timestamp" }`
 
 ## Integração com IA (MVP)
 O backend integra com APIs de IA para análise das competências do ENEM:
