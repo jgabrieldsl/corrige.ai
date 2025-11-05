@@ -2,19 +2,19 @@ import { useConnectionController } from '../controllers'
 import type { ConnectionRequest } from '../models'
 
 export const useConnectionHome = () => {
-  const { connection, isConnecting, setConnection, disconnect } = useConnectionController()
+  const { connection, isConnecting, currentUserId, setConnection, disconnect } = useConnectionController()
 
   const connectionPayload: ConnectionRequest = {
     tipo: 'CONNECT',
     dados: {
-      userId: 'abc123',
+      userId: Math.random().toString(36).substring(2, 15),
       userType: 'STUDENT',
-      authToken: 'token-xyz'
+      authToken: crypto.randomUUID()
     }
   }
 
   const handleConnect = async () => await setConnection(connectionPayload)
   const handleDisconnect = async () => await disconnect()
 
-  return { connection, isConnecting, handleConnect, handleDisconnect }
+  return { connection, isConnecting, currentUserId, handleConnect, handleDisconnect }
 }

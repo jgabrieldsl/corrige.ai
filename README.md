@@ -19,6 +19,84 @@ Utilizando APIs de IA para análise de texto, o sistema avalia competências com
 - **Fluxo de Versionamento**: Gitflow
 - **Testes**: Implementação de testes unitários e de integração (usando JUnit para Java e Jest para React)
 
+## Como Rodar o Projeto
+
+
+### 1. Servidor Java (Porta 3001)
+O servidor Java gerencia conexões TCP em tempo real.
+
+```bash
+# Navegue até o diretório do servidor
+cd servidor
+
+# Compile e execute o servidor
+mvn exec:java
+```
+
+**Comandos disponíveis no servidor:**
+- `desativar` - Para desligar o servidor
+- `status` - Exibe o status do servidor
+
+O servidor estará rodando na porta **3001** e aguardando conexões.
+
+---
+
+### 2. Backend Spring Boot (Porta 8080)
+O backend fornece a API REST e gerencia a comunicação entre o frontend e o servidor Java.
+
+```bash
+# Navegue até o diretório do backend
+cd backend
+
+# Compile e execute o Spring Boot
+mvn spring-boot:run
+```
+
+**Configuração:**
+- Certifique-se de que o arquivo `application.yml` em `src/main/resources` está configurado corretamente com as credenciais do MongoDB.
+
+O backend estará disponível em: **http://localhost:8080**
+
+**Endpoints principais:**
+- `POST /api/test` - Estabelece conexão com o servidor
+- `GET /api/connections` - Lista todas as conexões
+- `DELETE /api/disconnect/{socketId}` - Desconecta um socket específico
+
+---
+
+### 3. Frontend React
+O frontend é a interface do usuário.
+
+```bash
+# Navegue até o diretório do frontend
+cd frontend/corrige.ai
+
+# Instale as dependências (primeira vez)
+yarn install
+
+# Execute o servidor de desenvolvimento
+yarn dev
+```
+
+O frontend estará disponível em: **http://localhost:5173**
+
+---
+
+### Ordem de Inicialização Recomendada
+1. **Primeiro**: Inicie o Servidor Java (porta 3001)
+2. **Segundo**: Inicie o Backend Spring Boot (porta 8080)
+3. **Terceiro**: Inicie o Frontend React (porta 5173)
+
+### Testando a Aplicação
+1. Acesse o frontend no navegador
+2. Clique em **"Conectar"**
+3. Você verá:
+   - Socket ID gerado
+   - Timestamp da conexão
+   - Total de usuários conectados
+4. Abra outra aba e conecte novamente - o contador aumentará
+5. Clique em **"Desconectar"** para fechar a conexão
+---
 
 ## Contribuição
 Este projeto utiliza o **Gitflow** como fluxo de trabalho para gerenciar branches. As branches principais são:

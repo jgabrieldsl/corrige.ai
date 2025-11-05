@@ -3,6 +3,8 @@ package com.corrigeai.servidor;
 import com.corrigeai.servidor.comunicacao.Comunicado;
 import com.corrigeai.servidor.comunicacao.PedidoDeConexao;
 import com.corrigeai.servidor.comunicacao.RespostaDeConexao;
+import com.corrigeai.servidor.comunicacao.PedidoDeMensagem;
+import com.corrigeai.servidor.comunicacao.MensagemChat;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
@@ -114,6 +116,37 @@ public class SupervisorDeConexao extends Thread {
                     
                     // Conexão permanece aberta para próximos comandos
                     System.out.println("[SUPERVISOR] Aguardando próximos comandos...");
+                }
+                else if (comunicado instanceof PedidoDeMensagem) {
+                    System.out.println("[SUPERVISOR] Processando PedidoDeMensagem...");
+                    PedidoDeMensagem pedido = (PedidoDeMensagem) comunicado;
+                    
+                    String mensagem = pedido.getMensagem();
+                    long timestamp = System.currentTimeMillis();
+                    
+                    System.out.println("[CHAT] Mensagem recebida de " + this.usuario.getUserId() + ": " + mensagem);
+                    
+                    // Cria mensagem de broadcast
+                    MensagemChat chatMessage = new MensagemChat(
+                        this.usuario.getUserId(),
+                        this.usuario.getUserType(),
+                        mensagem,
+                        timestamp
+                    );
+                    
+                    // Transmite para todos os usuários conectados
+                    synchronized (this.usuarios) {
+                        int enviadas = 0;
+                        for (Parceiro parceiro : this.usuarios) {
+                            try {
+                                parceiro.receba(chatMessage);
+                                enviadas++;
+                            } catch (Exception e) {
+                                System.err.println("[CHAT] Erro ao enviar mensagem para " + parceiro.getSocketId() + ": " + e.getMessage());
+                            }
+                        }
+                        System.out.println("[CHAT] Mensagem transmitida para " + enviadas + " usuário(s)");
+                    }
                 }
             }
         } catch (Exception erro) {

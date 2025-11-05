@@ -3,6 +3,8 @@ package com.corrigeai.api.services;
 import com.corrigeai.servidor.comunicacao.Comunicado;
 import com.corrigeai.servidor.comunicacao.PedidoDeConexao;
 import com.corrigeai.servidor.comunicacao.RespostaDeConexao;
+import com.corrigeai.servidor.comunicacao.PedidoDeMensagem;
+import com.corrigeai.servidor.comunicacao.MensagemChat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,9 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
+import java.util.List;
+import java.util.ArrayList;
 
 @Service
 public class SocketConnectionManager {
@@ -21,6 +26,29 @@ public class SocketConnectionManager {
     
     // Pool de conexões ativas por socketId
     private final Map<String, PersistentConnection> connections = new ConcurrentHashMap<>();
+    
+    // Listeners para mensagens de chat
+    private final List<Consumer<MensagemChat>> chatMessageListeners = new ArrayList<>();
+    
+    /**
+     * Registra um listener para mensagens de chat
+     */
+    public void addChatMessageListener(Consumer<MensagemChat> listener) {
+        chatMessageListeners.add(listener);
+    }
+    
+    /**
+     * Notifica todos os listeners sobre uma nova mensagem
+     */
+    private void notifyChatMessageListeners(MensagemChat mensagem) {
+        for (Consumer<MensagemChat> listener : chatMessageListeners) {
+            try {
+                listener.accept(mensagem);
+            } catch (Exception e) {
+                logger.error("Erro ao notificar listener", e);
+            }
+        }
+    }
     
     /**
      * Estabelece uma conexão persistente com o servidor
@@ -94,6 +122,23 @@ public class SocketConnectionManager {
     }
     
     /**
+     * Envia uma mensagem de chat
+     */
+    public void sendChatMessage(String socketId, String mensagem) throws Exception {
+        PersistentConnection connection = connections.get(socketId);
+        
+        if (connection == null) {
+            throw new Exception("Conexão não encontrada: " + socketId);
+        }
+        
+        Map<String, Object> dados = Map.of("mensagem", mensagem);
+        PedidoDeMensagem pedido = new PedidoDeMensagem("SEND_MESSAGE", dados);
+        
+        connection.send(pedido);
+        logger.info("Mensagem de chat enviada do socketId: {}", socketId);
+    }
+    
+    /**
      * Desconecta uma conexão
      */
     public void disconnect(String socketId) {
@@ -115,7 +160,7 @@ public class SocketConnectionManager {
     /**
      * Classe interna que representa uma conexão persistente
      */
-    public static class PersistentConnection {
+    public class PersistentConnection {
         private final String socketId;
         private final String userId;
         private final Socket socket;
@@ -182,9 +227,16 @@ public class SocketConnectionManager {
          * Processa mensagens recebidas do servidor
          */
         private void handleIncomingMessage(Object mensagem) {
-            // TODO: Implementar lógica para processar mensagens
-            // Por exemplo: salvar no banco, enviar para WebSocket do frontend, etc.
-            logger.info("Processando mensagem: {}", mensagem);
+            if (mensagem instanceof MensagemChat) {
+                MensagemChat chatMsg = (MensagemChat) mensagem;
+                logger.info("[CHAT-{}] Mensagem recebida de {}: {}", 
+                    userId, chatMsg.getUserId(), chatMsg.getMensagem());
+                
+                // Notifica os listeners
+                notifyChatMessageListeners(chatMsg);
+            } else {
+                logger.info("Processando mensagem: {}", mensagem);
+            }
         }
         
         /**
