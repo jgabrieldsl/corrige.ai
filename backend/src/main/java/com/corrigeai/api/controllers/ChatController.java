@@ -2,8 +2,6 @@ package com.corrigeai.api.controllers;
 
 import com.corrigeai.api.services.SocketConnectionManager;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 @RequestMapping("/api/chat")
-public class ChatController {
-    private static final Logger logger = LoggerFactory.getLogger(ChatController.class);
-    
+public class ChatController {    
     @Autowired
     private SocketConnectionManager connectionManager;
     
@@ -106,10 +102,7 @@ public class ChatController {
             emitters.remove(socketId);
         });
         
-        emitter.onError((e) -> {
-            logger.error("Erro no stream para socketId: {}", socketId, e);
-            emitters.remove(socketId);
-        });
+        emitter.onError((e) -> { emitters.remove(socketId); });
         
         return emitter;
     }
