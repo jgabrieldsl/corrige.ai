@@ -2,12 +2,13 @@
 Backend da plataforma Corrige.ai, desenvolvido em Java com Spring Boot, focado em resolver a dor do usuário relacionada à demora, ansiedade e falta de acesso a feedbacks de redação. O sistema atua como intermediário entre o aluno e a IA, garantindo análises rápidas e feedbacks detalhados das redações.
 
 ## Tecnologias Principais (MVP)
-- Java
-- Spring Boot
-- Spring WebSocket (Comunicação em tempo real)
-  - ```spring-boot-starter-websocket```
-- MongoDB
-- JUnit
+- **Java 17**
+- **Spring Boot 3.1.5**
+- **Spring Web** (REST API + SSE)
+- **Spring Data MongoDB** (Persistência)
+- **Lombok** (Redução de boilerplate)
+- **Maven** (Gerenciamento de dependências)
+
 
 ## Estrutura do Projeto
 ```
@@ -15,115 +16,141 @@ backend/
 ├── src/
 │   ├── main/
 │   │   ├── java/
-│   │   │   ├── controllers/    # Controladores REST (endpoints da API)
-│   │   │   ├── services/       # Regras de negócio
-│   │   │   ├── models/         # Classes de domínio
-│   │   │   ├── repositories/   # Acesso ao banco de dados
-│   │   │   ├── config/         # Configurações
-│   │   │   └── utils/          # Classes utilitárias
-│   │   └── resources/          # Arquivos de configuração
-│   └── test/                   # Testes unitários e de integração
+│   │   │   └── com/corrigeai/api/
+│   │   │       ├── controllers/     # REST Controllers
+│   │   │       │   ├── ChatController.java
+│   │   │       │   └── ConnectionController.java
+│   │   │       ├── services/        # Lógica de negócio
+│   │   │       │   ├── SocketConnectionManager.java
+│   │   │       │   ├── ServerCommunicationService.java
+│   │   │       │   ├── SocketClientService.java
+│   │   │       │   └── SocketService.java
+│   │   │       ├── models/          # Entidades
+│   │   │       │   ├── ConnectRequest.java
+│   │   │       │   ├── ConnectResponse.java
+│   │   │       │   └── SocketResponse.java
+│   │   │       ├── repositories/    # Acesso MongoDB
+│   │   │       │   └── SocketResponseRepository.java
+│   │   │       ├── config/          # Configurações
+│   │   │       │   ├── CorsConfig.java
+│   │   │       │   └── JacksonConfig.java
+│   │   │       └── CorrigeAiApplication.java
+│   │   └── resources/
+│   │       └── application.yml      # Configuração MongoDB
+│   └── test/                        # Testes
+└── pom.xml
 ```
 
-## Configuração do Ambiente
-1. Configure o JDK 17+
-2. Configure o MongoDB
-3. Configure as variáveis de ambiente no .env
-4. Execute o projeto:
+### Executar o projeto
+```bash
+cd backend
 
-## Funcionalidades do MVP
+# Via Maven
+mvn spring-boot:run
 
-### 1. Autenticação e Usuários
-- `POST /api/auth/register`: Cadastro de novo usuário
-- `POST /api/auth/login`: Login de usuário
-- `GET /api/users/profile`: Obter perfil do usuário
+# Ou compilar e executar
+mvn clean compile
+mvn exec:java -Dexec.mainClass="com.corrigeai.api.CorrigeAiApplication"
+```
 
-### 2. Gestão de Redações (MVP)
-- `POST /api/essays/text`: Enviar redação via texto
-- `GET /api/essays`: Listar histórico de redações
-- `GET /api/essays/{id}`: Obter redação específica
-- `GET /api/essays/{id}/feedback`: Obter feedback detalhado
+## Funcionalidades Implementadas (MVP)
 
-### 3. Sistema de Tickets
-- `POST /api/tickets`: Criar ticket para comunicação com professor
-- `GET /api/tickets`: Listar tickets do usuário
-- `PUT /api/tickets/{id}`: Atualizar ticket
+### 1. Sistema de Conexão Socket
+- `POST /api/connect`: Estabelece conexão com servidor socket
+  ```json
+  {
+    "dados": {
+      "userId": "user123",
+      "userType": "Aluno", 
+      "authToken": "token"
+    }
+  }
+  ```
+- `GET /api/connections`: Lista todas as conexões salvas no MongoDB
+- `DELETE /api/connections/{socketId}`: Desconecta socket específico
 
-### 4. Sistema de Conexão em Tempo Real
-- `POST /api/test`: Estabelece conexão com o servidor de sockets
-- `GET /api/connections`: Lista todas as conexões ativas
-- `DELETE /api/disconnect/{socketId}`: Desconecta um socket específico
-
-### 5. Sistema de Chat em Tempo Real
+### Sistema de Chat em Tempo Real
 - `POST /api/chat/send`: Envia mensagem de chat
-  - Body: `{ "socketId": "uuid", "mensagem": "texto" }`
-- `GET /api/chat/stream/{socketId}`: Stream SSE (Server-Sent Events) para receber mensagens em tempo real
-  - Retorna eventos do tipo `chat-message` com dados: `{ "userId", "userType", "mensagem", "timestamp" }`
+  ```json
+  {
+    "socketId": "uuid-123",
+    "mensagem": "Olá pessoal!"
+  }
+  ```
+- `GET /api/chat/stream/{socketId}`: Stream SSE para receber mensagens
+  - Retorna eventos `chat-message` com dados da mensagem
+  - Conexão persistente para push em tempo real
 
-## Integração com IA (MVP)
-O backend integra com APIs de IA para análise das competências do ENEM:
-1. Domínio da norma culta da língua escrita
-2. Compreensão do tema e aplicação das áreas de conhecimento
-3. Capacidade de organizar e relacionar informações e argumentos
-4. Conhecimento dos mecanismos linguísticos necessários para a construção da argumentação
-5. Elaboração de proposta de intervenção para o problema apresentado
+### Persistência MongoDB
+- **Collection**: `socket_responses` - Dados de conexões
+- **Modelo**: `SocketResponse` com socketId, timestamp, tipo, totalUsuarios
+- **Repository**: `SocketResponseRepository` usando Spring Data MongoDB
 
-### Processo de Análise
-1. Recebimento do texto do frontend
-2. Pré-processamento e formatação
-3. Envio para API de IA
-4. Processamento do feedback recebido
-5. Armazenamento dos resultados
-6. Envio do feedback estruturado para o frontend
+## Arquitetura de Comunicação
 
-### Visão Geral da Comunicação com o Servidor
-O backend atua como ponte entre o frontend e o servidor de tickets Java, gerenciando toda a comunicação relacionada ao sistema de dúvidas e interação aluno-professor.
+### 1. Conexão de Usuário
+1. **Frontend** → `POST /api/connect` → **Backend**
+2. **Backend** → TCP Socket → **Servidor** (porta 3001)
+3. **Servidor** retorna `RespostaDeConexao` com socketId
+4. **Backend** salva no MongoDB e retorna dados para Frontend
 
-### Fluxo de Comunicação
-1. Frontend -> Backend:
-   - Cliente faz requisição HTTP REST
-   - Backend valida a requisição
-   - Backend prepara os dados para o servidor
+### 2. Chat em Tempo Real
+1. **Frontend** → `POST /api/chat/send` → **Backend**
+2. **Backend** → `PedidoDeMensagem` → **Servidor**
+3. **Servidor** faz broadcast da `MensagemChat` para todos
+4. **Backend** recebe mensagem e envia via SSE para Frontend
 
-2. Backend -> Servidor:
-   - Conexão via WebSocket
-   - Envio de mensagens em tempo real
-   - Gerenciamento de estado da conexão
-
-3. Servidor -> Backend:
-   - Recebimento de respostas em tempo real
-   - Atualização de status dos tickets
-   - Notificações de novas mensagens
-   - Confirmação de entrega
+### 3. Server-Sent Events (SSE)
+- **Endpoint**: `GET /api/chat/stream/{socketId}`
+- **Content-Type**: `text/event-stream`
+- **Event Type**: `chat-message`
+- **Deduplicação**: Sistema previne mensagens duplicadas
+- **Thread Safety**: Gerenciamento seguro de múltiplos emitters
 
 ### Componentes Principais
-1. TicketController:
-   - Recebe requisições do frontend
-   - Valida permissões e dados
-   - Coordena comunicação com servidor
 
-2. WebSocketService:
-   - Mantém conexão com servidor
-   - Gerencia reconexões
-   - Processa mensagens recebidas
+#### 1. `SocketConnectionManager`
+```java
+@Service
+public class SocketConnectionManager {
+    // Pool de conexões TCP persistentes
+    private final Map<String, PersistentConnection> connections;
+    
+    // Cache para deduplicação de mensagens
+    private final Map<String, Long> processedMessages;
+    
+    public RespostaDeConexao connect(String userId, String userType, String authToken);
+    public void sendChatMessage(String socketId, String mensagem);
+    public void addChatMessageListener(Consumer<MensagemChat> listener);
+}
+```
 
-3. TicketService:
-   - Lógica de negócio dos tickets
-   - Sincronização com banco de dados
-   - Cache de mensagens recentes
+#### 2. `ChatController`
+```java
+@RestController
+@RequestMapping("/api/chat")
+public class ChatController {
+    // Mapa de emitters SSE por socketId
+    private final Map<String, SseEmitter> emitters;
+    
+    @GetMapping(value = "/stream/{socketId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamMessages(@PathVariable String socketId);
+    
+    @PostMapping("/send")
+    public ResponseEntity<?> sendMessage(@RequestBody SendMessageRequest request);
+}
+```
 
-### Requisitos de Comunicação
-1. Conexão:
-   - Estabelecimento de conexão WebSocket
-   - Autenticação do cliente
-   - Reconexão automática em falhas
+#### 3. `ServerCommunicationService`
+```java
+@Service
+public class ServerCommunicationService {
+    public ConnectResponse handleConnection(ConnectRequest request) {
+        // 1. Conecta com servidor socket
+        // 2. Salva resposta no MongoDB
+        // 3. Retorna dados para o frontend
+    }
+}
+```
 
-2. Mensagens:
-   - Envio em tempo real
-   - Confirmação de entrega
-   - Buffer para falhas de conexão
-
-3. Estado:
-   - Monitoramento de conexão
-   - Sincronização de estado
-   - Recuperação de falhas
+---
