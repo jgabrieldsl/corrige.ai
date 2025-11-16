@@ -6,6 +6,7 @@ import com.corrigeai.api.models.SocketResponse;
 import com.corrigeai.api.repositories.SocketResponseRepository;
 import com.corrigeai.api.services.ServerCommunicationService;
 import com.corrigeai.api.services.SocketConnectionManager;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +18,8 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
-public class TestController {
-    private static final Logger logger = LoggerFactory.getLogger(TestController.class);
+public class ConnectionController {
+    private static final Logger logger = LoggerFactory.getLogger(ConnectionController.class);
 
     @Autowired
     private ServerCommunicationService serverCommunicationService;
@@ -29,9 +30,9 @@ public class TestController {
     @Autowired
     private SocketResponseRepository socketResponseRepository;
 
-    @PostMapping("/test")
+    @PostMapping("/connect")
     @NonNull
-    public ResponseEntity<?> testConnection(@RequestBody @NonNull ConnectRequest request) {
+    public ResponseEntity<?> establishConnection(@RequestBody @NonNull ConnectRequest request) {
         try {
             logger.info("Recebendo requisição de conexão: {}", request);
             ConnectResponse response = serverCommunicationService.handleConnection(request);
@@ -55,7 +56,7 @@ public class TestController {
         }
     }
 
-    @DeleteMapping("/disconnect/{socketId}")
+    @DeleteMapping("/connections/{socketId}")
     public ResponseEntity<?> disconnect(@PathVariable String socketId) {
         try {
             logger.info("Desconectando socketId: {}", socketId);
@@ -68,7 +69,9 @@ public class TestController {
         }
     }
 
+    @SuppressWarnings("unused") // getMessage() é usado pelo Jackson para serialização JSON
     private static class SuccessResponse {
+        @JsonProperty("message")
         private final String message;
 
         public SuccessResponse(String message) {
@@ -80,7 +83,9 @@ public class TestController {
         }
     }
 
+    @SuppressWarnings("unused") // getMessage() é usado pelo Jackson para serialização JSON
     private static class ErrorResponse {
+        @JsonProperty("message")
         private final String message;
 
         public ErrorResponse(String message) {  
