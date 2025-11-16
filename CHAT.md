@@ -14,9 +14,10 @@ O sistema de chat permite que múltiplos usuários se comuniquem em tempo real a
 ### Fluxo de Comunicação
 
 1. **Usuário conecta**:
-   - Frontend → POST `/api/test` → Backend
+   - Frontend → POST `/api/connect` → Backend
    - Backend → TCP Socket → Servidor (porta 3001)
    - Servidor retorna `socketId` e `totalUsuarios`
+   - **Backend salva conexão no MongoDB** (`socket_responses` collection)
    - Backend abre stream SSE para receber mensagens
 
 2. **Usuário envia mensagem**:
@@ -50,7 +51,16 @@ synchronized (this.usuarios) {
 ### Backend (Spring Boot)
 
 **Endpoints:**
-- `POST /api/test` - Conecta ao servidor
+- `POST /ap i/connect` - Conecta ao servidor
+  ```json
+  {
+    "dados": {
+      "userId": "user123",
+      "userType": "Aluno",
+      "authToken": "token"
+    }
+  }
+  ```
 - `POST /api/chat/send` - Envia mensagem
   ```json
   {
@@ -59,12 +69,22 @@ synchronized (this.usuarios) {
   }
   ```
 - `GET /api/chat/stream/{socketId}` - Stream SSE de mensagens
+- `GET /api/connections` - Lista todas as conexões salvas
+- `DELETE /api/connections/{socketId}` - Desconecta usuário
 
 **SocketConnectionManager:**
-- Gerencia pool de conexões persistentes
+- Gerencia pool de conexões persistentes (`ConcurrentHashMap`)
 - Envia `PedidoDeMensagem` ao servidor
-- Recebe `MensagemChat` e notifica listeners
+- Recebe `MensagemChat` e notifica listeners SSE
+- Implementa deduplicação de mensagens (evita duplicatas)
+- Auto-limpeza de cache de mensagens processadas
 - Usa SSE (Server-Sent Events) para push em tempo real
+
+**Persistência MongoDB:**
+- **Collection:** `socket_responses` - Dados de conexões
+- **Repository:** `SocketResponseRepository` (Spring Data MongoDB)
+- **Modelo:** `SocketResponse` com socketId, timestamp, tipo, totalUsuarios
+- **Salvamento:** Apenas conexões bem-sucedidas são persistidas
 
 ### Frontend (React + TypeScript)
 
@@ -116,36 +136,34 @@ mvn spring-boot:run
 
 # Terminal 3 - Frontend
 cd frontend/corrige.ai
-npm run dev
+yarn
+yarn dev
 ```
 
 ### 2. Teste com múltiplos usuários
 
 1. Abra `http://localhost:5173` em **duas abas diferentes**
-2. Clique em "Conectar" em ambas as abas
+2. Clique em "Conectar" em ambas as abas (dados são salvos no MongoDB)
 3. Veja o contador "Usuários conectados: 2"
 4. Abra o chat (ícone no canto inferior)
 5. Digite uma mensagem em uma aba
 6. A mensagem aparecerá **instantaneamente** em todas as abas!
 
-### 3. Verificando logs
+### 3. Verificando dados persistidos
 
-**Servidor:**
-```
-[CHAT] Mensagem recebida de abc123: Olá pessoal!
-[CHAT] Mensagem transmitida para 2 usuário(s)
-```
+**MongoDB (Compass/CLI):**
+```javascript
+// Verificar conexões salvas
+db.socket_responses.find().pretty()
 
-**Backend:**
-```
-[CHAT-abc123] Mensagem recebida de abc123: Olá pessoal!
-Mensagem de chat enviada do socketId: uuid-1
-```
-
-**Frontend (Console):**
-```
-SSE Event: chat-message
-{userId: "abc123", mensagem: "Olá pessoal!", timestamp: 1730777777}
+// Resultado esperado:
+{
+  "_id": "...",
+  "socketId": "uuid-123",
+  "timestamp": 1730777777,
+  "tipo": "CONNECT_SUCCESS", 
+  "totalUsuarios": 2
+}
 ```
 
 ## Características Técnicas
@@ -165,30 +183,6 @@ SSE Event: chat-message
 ### Thread Safety
 - Lista de usuários sincronizada com `synchronized (this.usuarios)`
 - Pool de conexões no backend usa `ConcurrentHashMap`
-- Listeners de mensagens em `ArrayList` thread-safe
-
-## Próximas Melhorias
-
-- [ ] Salvar mensagens no MongoDB
-- [ ] Autenticação de usuários
-- [ ] Salas de chat separadas
-- [ ] Notificações de "usuário está digitando..."
-- [ ] Histórico de mensagens ao conectar
-- [ ] Upload de arquivos/imagens
-- [ ] Markdown/emojis nas mensagens
-
-## Troubleshooting
-
-**Mensagens não aparecem:**
-- Verifique se o servidor está rodando na porta 3001
-- Confirme que o backend iniciou sem erros
-- Abra DevTools → Network → Verifique stream SSE ativo
-
-**Erro "Connection refused":**
-- Certifique-se que a ordem foi: Servidor → Backend → Frontend
-- Verifique firewall/antivirus não está bloqueando porta 3001
-
-**SSE desconecta:**
-- Normal após ~30 minutos de inatividade
-- O navegador reconecta automaticamente
-- Mensagens são bufferizadas e enviadas na reconexão
+- Listeners de mensagens registrados uma única vez (`listenerRegistered` flag)
+- Deduplicação thread-safe com `processedMessages` map
+- Auto-limpeza de emitters SSE desconectados
