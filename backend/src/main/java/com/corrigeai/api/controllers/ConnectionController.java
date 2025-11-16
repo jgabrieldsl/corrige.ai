@@ -7,8 +7,6 @@ import com.corrigeai.api.repositories.SocketResponseRepository;
 import com.corrigeai.api.services.ServerCommunicationService;
 import com.corrigeai.api.services.SocketConnectionManager;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
@@ -19,8 +17,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api")
 public class ConnectionController {
-    private static final Logger logger = LoggerFactory.getLogger(ConnectionController.class);
-
     @Autowired
     private ServerCommunicationService serverCommunicationService;
 
@@ -32,13 +28,14 @@ public class ConnectionController {
 
     @PostMapping("/connect")
     @NonNull
-    public ResponseEntity<?> establishConnection(@RequestBody @NonNull ConnectRequest request) {
-        try {
-            ConnectResponse response = serverCommunicationService.handleConnection(request);
+    public ResponseEntity<ConnectResponse> establishConnection(@RequestBody @NonNull ConnectRequest request) {        
+        ConnectResponse response = serverCommunicationService.handleConnection(request);
+        
+        // Verifica o tipo de resposta para determinar o status HTTP
+        if (ConnectResponse.CONNECT_SUCCESS.equals(response.getTipo())) {
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            logger.error("Erro ao processar requisição de conexão", e);
-            return ResponseEntity.internalServerError().body(new ErrorResponse("Erro ao processar requisição: " + e.getMessage()));
+        } else {
+            return ResponseEntity.internalServerError().body(response);
         }
     }
 
@@ -48,7 +45,6 @@ public class ConnectionController {
             List<SocketResponse> connections = socketResponseRepository.findAll();
             return ResponseEntity.ok(connections);
         } catch (Exception e) {
-            logger.error("Erro ao buscar conexões", e);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -59,7 +55,6 @@ public class ConnectionController {
             connectionManager.disconnect(socketId);
             return ResponseEntity.ok(new SuccessResponse("Desconectado com sucesso"));
         } catch (Exception e) {
-            logger.error("Erro ao desconectar", e);
             return ResponseEntity.internalServerError().body(new ErrorResponse("Erro ao desconectar: " + e.getMessage()));
         }
     }
