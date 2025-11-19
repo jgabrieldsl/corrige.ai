@@ -43,7 +43,7 @@ public class ServidorTicket {
             System.out.print("> ");
 
             String comando = scanner.nextLine();
-
+    
             if (comando.toLowerCase().equals("desativar")) {
                 synchronized (usuarios) {
                     for (Parceiro usuario : usuarios) {
