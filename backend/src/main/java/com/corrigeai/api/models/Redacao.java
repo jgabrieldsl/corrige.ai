@@ -5,7 +5,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.util.Date;
 
 @Document(collection = "redacoes")
-public class redacao{
+public class Redacao{
     @Id
     private String id; // id da redação gerado pelo mongo
     private String conteudo; // texto da redacão
